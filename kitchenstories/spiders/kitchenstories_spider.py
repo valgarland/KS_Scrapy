@@ -1,5 +1,6 @@
 from scrapy import Spider, Request
 from kitchenstories.items import KitchenstoriesItem
+from collections import Counter
 
 class kitchenstoriesSpider(Spider):
     name = 'kitchenstories_spider'
@@ -43,12 +44,46 @@ class kitchenstoriesSpider(Spider):
 
     def parse_dish_page(self, response):
         
-        try:
-            dish_name = response.xpath('//h1[@class="main-headline recipe-title main-headline"]/text()').extract()
+        #DISH NAME
+        #NOTE: Did not use try/except since dish name is always present - otherwise dish wouldn't exist
+        dish_name = response.xpath('//h1[@class="main-headline recipe-title main-headline"]/text()').extract()
 
+        #RATING SCRAPE
+
+        try:
+            rating = 0
+            index = 0
+
+            for i in stars:
+                i = i.split('--')[-1]
+                stars[index] = i
+                index +=1
+
+            #NOTE: .count() could've been used to count the number of filled/half-filled stars, but that would
+            #       require going through the list twice. If this were a large list, it would technically be 
+            #       slower, hence the choice of using dictionaries   
+
+            stars = Counter(stars)
+            stars['half-filled']=stars['half-filled']/2
+
+            for k, v in stars.items():
+                if k == 'filled' or k == 'half-filled':
+                    rating = v + rating
         except:
-            print('***** No dish name found - null dish name provided *****')
+            print('***** No rating given for dish - assuming 0 stars *****')
             print(f'Offending URL: {response.url}')
-            dish_name = None
+            rating = None
+
+        
+        #REVIEWS FOR RATING SCRAPE
+
+        try:
+            reviews_for_rating = int(response.xpath('//div[@class="rating__text"]/text()').extract()[0].split()[-2])
+        except:
+            print('***** Rating based on 0 reviews - returning 0 *****')
+            print(f'Offending URL: {response.url}')
+            reviews_for_rating = None
+
+
 
 
