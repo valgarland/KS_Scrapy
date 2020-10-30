@@ -1,6 +1,7 @@
 from scrapy import Spider, Request
 from kitchenstories.items import KitchenstoriesItem
 from collections import Counter
+import re
 
 class kitchenstoriesSpider(Spider):
     name = 'kitchenstories_spider'
@@ -51,6 +52,8 @@ class kitchenstoriesSpider(Spider):
         #RATING 
 
         try:
+            stars = response.xpath('//div[@class="rating__stars"]/div/@class').extract()
+
             rating = 0
             index = 0
 
@@ -72,7 +75,7 @@ class kitchenstoriesSpider(Spider):
         except:
             print('***** No rating given for dish - assuming 0 stars *****')
             print(f'Offending URL: {response.url}')
-            rating = None
+            rating = 0
 
         
         #REVIEWS FOR RATING
@@ -82,18 +85,18 @@ class kitchenstoriesSpider(Spider):
         except:
             print('***** Rating based on 0 reviews - returning 0 *****')
             print(f'Offending URL: {response.url}')
-            reviews_for_rating = None
+            reviews_for_rating = 0
 
 
         #USER LIKES
 
         try:
-            user_likes = response.xpath('//div[@class="recipe-information__buttons u-no-print"]').extract()
-            user_likes = int(like[0].split()[4].split('"')[1])
+            likes = response.xpath('//div[@class="recipe-information__buttons u-no-print"]').extract()
+            user_likes = int(likes[0].split()[4].split('"')[1])
         except:
             print('***** No user likes found *****')
             print(f'Offending URL: {response.url}')
-            user_likes = None
+            user_likes = 0
 
 
         #AUTHOR
@@ -111,21 +114,21 @@ class kitchenstoriesSpider(Spider):
         #DESCRIPTION
 
         try:
-            description = response.xpath('//p[@class="author-information__text"/text()').extract_first()
+            dish_description = response.xpath('//p[@class="author-information__text"]/text()').extract_first()
         except:
             print('***** No description provided *****')
             print(f'Offending URL: {response.url}')
-            description = None
+            dish_description = None
 
 
         #DIFFICULTY
 
         try:
-            difficulty = response.xpath('//h2[@class="sub-headline"]/text()').extract_first()
+            difficulty = response.xpath('//div[@class="recipe-difficulty"]/span/text()').extract_first().split()[0]
         except:
             print('***** No difficulty level found *****')
             print(f'Offending URL: {response.url}')
-            difficulty = None
+            difficulty = 0
 
 
         #PREP / BAKE / REST TIMES
@@ -133,16 +136,31 @@ class kitchenstoriesSpider(Spider):
         #Defining a local class to have all of the data cleaning within the class; also becomes
         #easy to call and evaluate where values are coming from 
 
-        times = response.xpath('//div[@class="time-container"]').extract()
+        try:
+            times = response.xpath('//div[@class="time-container"]').extract()
 
-        index = 0
-        for i in times:
-            times[index] = int(re.findall(r'\d+', i)[0])
-            index +=1
+            index = 0
+            for i in times:
+                times[index] = int(re.findall(r'\d+', i)[0])
+                index +=1
 
-        prep_time = times[0]
-        bake_time = time[1]
-        rest_time = time[2]
+            class Times:
+                def __init__(self, response):
+                    self.prep = response[0]
+                    self.bake = response[1]
+                    self.rest = response[2]    
+
+            cooking_times = Times(times)
+
+            prep_time = cooking_times.prep
+            bake_time = cooking_times.bake
+            rest_time = cooking_times.rest
+        except:
+            print('***** No cooking times found *****')
+            print(f'Offending URL: {response.url}')
+            prep_time = None
+            bake_time = 0
+            rest_time = 0           
 
         
         #SERVINGS
@@ -168,66 +186,86 @@ class kitchenstoriesSpider(Spider):
         #NUTRITIONAL INFORMATION
         #This whole section uses the same div class 'recipe-nutrition__information'
 
-        try:
-            nutr_info = response.xpath('//div[@class="recipe-nutrition__information"]/div/span/text()').extract()
+        # try:
+        #     nutr_info = response.xpath('//div[@class="recipe-nutrition__information"]/div/span/text()').extract()
 
-            #Defining a class to have all of the data cleaning within the class; also becomeseasy to call  
-            #and evaluate where the values are coming from
+        #     #Defining a class to have all of the data cleaning within the class; also becomeseasy to call  
+        #     #and evaluate where the values are coming from
 
-            class Nutrition:
-                def __init__(self, nutr_info):
-                    nutr_info = [int(i.split(' ')[0]) for i in nutr_info[1::2]]
-                    self.cal = nutr_info[0]
-                    self.protein = nutr_info[1]
-                    self.fat = nutr_info[2]
-                    self.carb = nutr_info[3]
+        #     class Nutrition:
+        #         def __init__(self, nutr_info):
+        #             nutr_info = [int(i.split(' ')[0]) for i in nutr_info[1::2]]
+        #             self.cal = nutr_info[0]
+        #             self.pro = nutr_info[1]
+        #             self.fats = nutr_info[2]
+        #             self.carbs = nutr_info[3]
+        #             nutr_info_units = list(map(lambda i: i[1], [i.split(' ') for i in nutr_info[1::2]]\
+        #                    [1:len(nutr_info)]))
+        #             self.pro_u = nutr_info_units[0]
+        #             self.fats_u = nutr_info_units[1]
+        #             self.carbs_u = nutr_info_units[2]
         
-            nutrition = Nutrition(nutr_info)
+        #     nutrition = Nutrition(nutr_info)
 
-            cal = Nutrition.cal
-            protein = Nutrition.protein
-            fat = Nutrition.fat
-            carb = Nutrition.carb
+        #     calories = Nutrition.cal
+        #     protein = Nutrition.pro
+        #     fat = Nutrition.fats
+        #     carb = Nutrition.carbs
+        #     protein_u = Nutrition.pro_u
+        #     fat_u = Nutrition.fats_u
+        #     carb_u = Nutrition.carbs_u        
 
-        except:
-            print('***** No nutritional information found *****')
-            print(f'Offending URL: {response.url}')
-            cal = None
-            protein = None
-            fat = None
-            carb = None
+        # except:
+        #     print('***** No nutritional information found *****')
+        #     print(f'Offending URL: {response.url}')
+        #     cal = None
+        #     protein = None
+        #     fat = None
+        #     carb = None
+        #     protein_u = None
+        #     fat_u = None
+        #     carb_u = None
 
 
         #STEPS REQUIRED
 
         try:
-            steps = int(response.xpath('//li[@class="step"]/h2/text()').extract_first().split('/')[-1])
+            total_steps = int(response.xpath('//li[@class="step"]/h2/text()').extract_first().split('/')[-1])
         except:
             print('***** No steps found *****')
             print(f'Offeding URL: {response.url}')
-            steps = 0            
+            total_steps = 0            
+
+
+        #NUMBER OF COMMENTS
+
+        #num_comments = response.xpath('//button[@class="comments__menu__li__btn comments__menu__li__btn--active"]/text()').extract_first()
 
 
         #Item listing
+
         item = KitchenstoriesItem()
         item['dish_name'] = dish_name
         item['rating'] = rating
         item['reviews_for_rating'] = reviews_for_rating
         item['author'] = author
         item['author_type'] = author_type
-        item['description'] = description
+        item['dish_description'] = dish_description
         item['difficulty'] = difficulty
         item['prep_time'] = prep_time
         item['bake_time'] = bake_time
         item['rest_time'] = rest_time
         item['servings'] = servings
-        item['ingredient_list'] = ingredient_list
+        item['ingredients'] = ingredients
         item['utensils'] = utensils
-        item['cal'] = cal
-        item['protein'] = protein
-        item['fat'] = fat
-        item['carb'] = carb
+        # item['calories'] = calories
+        # item['protein'] = protein
+        # item['fat'] = fat
+        # item['carb'] = carb
+        # item['protein_u'] = protein_u
+        # item['fat_u'] = fat_u
+        # item['carb_u'] = carb_u
         item['total_steps'] = total_steps
+        #item['num_comments'] = num_comments
 
         yield item
-
