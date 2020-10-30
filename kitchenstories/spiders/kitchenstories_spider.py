@@ -14,7 +14,7 @@ class kitchenstoriesSpider(Spider):
                         extract()[0].split('=')[-1])
 
         url_list = [f'https://www.kitchenstories.com/en/categories/dinner?page={i+1}'\
-                    for i in range(num_pages)]
+                    for i in range(2)] #range(num_pages)]
 
         for url in url_list:
 
@@ -269,15 +269,6 @@ class kitchenstoriesSpider(Spider):
             total_steps = None            
 
 
-        #NUMBER OF COMMENTS
-
-        # try:
-        #     num_comments = response.xpath('//button[@class="comments__menu__li__btn comments__menu__li__btn--active"]/text()').extract_first()
-        # except:
-        #     print('***** No comments found *****')
-        #     print(f'Offeding URL: {response.url}')
-        #     num_comments = 0  
-
         #Item listing
 
         item = KitchenstoriesItem()
@@ -304,6 +295,5 @@ class kitchenstoriesSpider(Spider):
         item['fat_u'] = fat_u
         item['carb_u'] = carb_u
         item['total_steps'] = total_steps
-        #item['num_comments'] = num_comments
 
         yield item

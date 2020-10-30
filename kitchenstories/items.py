@@ -30,4 +30,3 @@ class KitchenstoriesItem(scrapy.Item):
     fat_u = scrapy.Field()
     carb_u = scrapy.Field()
     total_steps = scrapy.Field()
-    #num_comments = scrapy.Field()
