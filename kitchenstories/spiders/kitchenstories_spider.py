@@ -14,7 +14,7 @@ class kitchenstoriesSpider(Spider):
                         extract()[0].split('=')[-1])
 
         url_list = [f'https://www.kitchenstories.com/en/categories/dinner?page={i+1}'\
-                    for i in range(2)] #range(num_pages)]
+                    for i in range(num_pages)]
 
         for url in url_list:
 
@@ -75,7 +75,7 @@ class kitchenstoriesSpider(Spider):
         except:
             print('***** No rating given for dish - assuming 0 stars *****')
             print(f'Offending URL: {response.url}')
-            rating = 0
+            rating = None
 
         
         #REVIEWS FOR RATING
@@ -85,7 +85,7 @@ class kitchenstoriesSpider(Spider):
         except:
             print('***** Rating based on 0 reviews - returning 0 *****')
             print(f'Offending URL: {response.url}')
-            reviews_for_rating = 0
+            reviews_for_rating = None
 
 
         #USER LIKES
@@ -96,19 +96,26 @@ class kitchenstoriesSpider(Spider):
         except:
             print('***** No user likes found *****')
             print(f'Offending URL: {response.url}')
-            user_likes = 0
+            user_likes = None
 
 
         #AUTHOR
-        #Author always available, hence no try/except
 
-        author = response.xpath('//p[@class="author-information__name"]/a/text()').extract_first()
-
+        try:
+            author = response.xpath('//p[@class="author-information__name"]/a/text()').extract_first()
+        except:
+            print('***** No author found *****')
+            print(f'Offending URL: {response.url}')
+            author = None            
 
         #AUTHOR TYPE
-        #Autor type always available, hence no try/except
 
-        author_type = response.xpath('//p[@class="author-information__occupation"]/text()').extract_first()
+        try:
+            author_type = response.xpath('//p[@class="author-information__occupation"]/text()').extract_first()
+        except:
+            print('***** No author type found *****')
+            print(f'Offending URL: {response.url}')
+            author_type = None
 
 
         #DESCRIPTION
@@ -129,7 +136,7 @@ class kitchenstoriesSpider(Spider):
         except:
             print('***** No difficulty level found *****')
             print(f'Offending URL: {response.url}')
-            difficulty = 0
+            difficulty = None
 
 
         #PREP / BAKE / REST TIMES
@@ -161,8 +168,8 @@ class kitchenstoriesSpider(Spider):
             print('***** No cooking times found *****')
             print(f'Offending URL: {response.url}')
             prep_time = None
-            bake_time = 0
-            rest_time = 0           
+            bake_time = None
+            rest_time = None        
 
         
         #SERVINGS
@@ -243,13 +250,13 @@ class kitchenstoriesSpider(Spider):
         except:
             print('***** No nutritional information found *****')
             print(f'Offending URL: {response.url}')
-            calories = 0
-            protein = 0
-            fat = 0
-            carb = 0
-            protein_u = 0
-            fat_u = 0
-            carb_u = 0
+            calories = None
+            protein = None
+            fat = None
+            carb = None
+            protein_u = None
+            fat_u = None
+            carb_u = None
 
 
         #STEPS REQUIRED
@@ -259,7 +266,7 @@ class kitchenstoriesSpider(Spider):
         except:
             print('***** No steps found *****')
             print(f'Offeding URL: {response.url}')
-            total_steps = 0            
+            total_steps = None            
 
 
         #NUMBER OF COMMENTS
