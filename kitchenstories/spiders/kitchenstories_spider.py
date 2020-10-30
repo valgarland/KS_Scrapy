@@ -133,8 +133,6 @@ class kitchenstoriesSpider(Spider):
 
         #PREP / BAKE / REST TIMES
         #This whole section uses the same div class 'time-container'
-        #Defining a local class to have all of the data cleaning within the class; also becomes
-        #easy to call and evaluate where values are coming from 
 
         try:
             times = response.xpath('//div[@class="time-container"]').extract()
@@ -143,6 +141,9 @@ class kitchenstoriesSpider(Spider):
             for i in times:
                 times[index] = int(re.findall(r'\d+', i)[0])
                 index +=1
+
+            #Defining a local class to have all of the data cleaning within the class should the time units
+            #be different; also becomes easy to call and evaluate where values are coming from 
 
             class Times:
                 def __init__(self, response):
@@ -170,7 +171,25 @@ class kitchenstoriesSpider(Spider):
         
         #INGREDIENT LIST
 
-        ingredients = response.xpath('//td[@class="ingredients__col-2"]/text()').extract()
+        try:
+            ingredient_list = response.xpath('//td[@class="ingredients__col-2"]/text()').extract()
+
+            ingredient_quantity = response.xpath('//td[@class="ingredients__col-1 js-col-1"]/@data-amount').extract()
+            [float(i) for i in ingredient_quantity]
+
+            ingredient_unit = response.xpath('//td[@class="ingredients__col-1 js-col-1"]/@data-unit').extract()
+
+            condiment_quantity = [0] * (len(ingredient_list) - len(ingredient_quantity))
+            condiment_unit = [''] * (len(ingredient_list) - len(ingredient_unit))
+
+            ingredient_quantity.extend(condiment_quantity)
+            ingredient_unit.extend(condiment_unit)
+        except:
+            print('***** No ingredients found *****')
+            print(f'Offending URL: {response.url}')
+            ingredient_list = None
+            ingredient_quantity = None
+            ingredient_unit = None
 
 
         #UTENSILS
@@ -186,45 +205,50 @@ class kitchenstoriesSpider(Spider):
         #NUTRITIONAL INFORMATION
         #This whole section uses the same div class 'recipe-nutrition__information'
 
-        # try:
-        #     nutr_info = response.xpath('//div[@class="recipe-nutrition__information"]/div/span/text()').extract()
+        try:
+            nutr_info = response.xpath('//div[@class="recipe-nutrition__information"]/div/span/text()').extract()
+            
+            nutr_info_values = [int(i.split(' ')[0]) for i in nutr_info[1::2]]
+    
+            nutr_info_units = list(map(lambda i: i[1], [i.split(' ') for i in nutr_info[1::2]]\
+                [1:len(nutr_info)]))
+            
+            #Defining a class to have all of the data cleaning within the class; also becomeseasy to call  
+            #and evaluate where the values are coming from
 
-        #     #Defining a class to have all of the data cleaning within the class; also becomeseasy to call  
-        #     #and evaluate where the values are coming from
+            class Nutrition:
+                def __init__(self, response1, response2):
+                    
+                    self.calories = response1[0]
+                    self.protein = response1[1]
+                    self.fat = response1[2]
+                    self.carb = response1[3]
 
-        #     class Nutrition:
-        #         def __init__(self, nutr_info):
-        #             nutr_info = [int(i.split(' ')[0]) for i in nutr_info[1::2]]
-        #             self.cal = nutr_info[0]
-        #             self.pro = nutr_info[1]
-        #             self.fats = nutr_info[2]
-        #             self.carbs = nutr_info[3]
-        #             nutr_info_units = list(map(lambda i: i[1], [i.split(' ') for i in nutr_info[1::2]]\
-        #                    [1:len(nutr_info)]))
-        #             self.pro_u = nutr_info_units[0]
-        #             self.fats_u = nutr_info_units[1]
-        #             self.carbs_u = nutr_info_units[2]
+                    self.protein_u = response2[0]
+                    self.fat_u = response2[1]
+                    self.carb_u = response2[2]
         
-        #     nutrition = Nutrition(nutr_info)
+            nutrition = Nutrition(nutr_info_values, nutr_info_units)
 
-        #     calories = Nutrition.cal
-        #     protein = Nutrition.pro
-        #     fat = Nutrition.fats
-        #     carb = Nutrition.carbs
-        #     protein_u = Nutrition.pro_u
-        #     fat_u = Nutrition.fats_u
-        #     carb_u = Nutrition.carbs_u        
+            calories = nutrition.calories
+            protein = nutrition.protein
+            fat = nutrition.fat
+            carb = nutrition.carb
+            
+            protein_u = nutrition.protein_u
+            fat_u = nutrition.fat_u
+            carb_u = nutrition.carb_u        
 
-        # except:
-        #     print('***** No nutritional information found *****')
-        #     print(f'Offending URL: {response.url}')
-        #     cal = None
-        #     protein = None
-        #     fat = None
-        #     carb = None
-        #     protein_u = None
-        #     fat_u = None
-        #     carb_u = None
+        except:
+            print('***** No nutritional information found *****')
+            print(f'Offending URL: {response.url}')
+            calories = 0
+            protein = 0
+            fat = 0
+            carb = 0
+            protein_u = 0
+            fat_u = 0
+            carb_u = 0
 
 
         #STEPS REQUIRED
@@ -239,8 +263,12 @@ class kitchenstoriesSpider(Spider):
 
         #NUMBER OF COMMENTS
 
-        #num_comments = response.xpath('//button[@class="comments__menu__li__btn comments__menu__li__btn--active"]/text()').extract_first()
-
+        # try:
+        #     num_comments = response.xpath('//button[@class="comments__menu__li__btn comments__menu__li__btn--active"]/text()').extract_first()
+        # except:
+        #     print('***** No comments found *****')
+        #     print(f'Offeding URL: {response.url}')
+        #     num_comments = 0  
 
         #Item listing
 
@@ -256,15 +284,17 @@ class kitchenstoriesSpider(Spider):
         item['bake_time'] = bake_time
         item['rest_time'] = rest_time
         item['servings'] = servings
-        item['ingredients'] = ingredients
+        item['ingredient_list'] = ingredient_list
+        item['ingredient_quantity'] = ingredient_quantity
+        item['ingredient_unit'] = ingredient_unit
         item['utensils'] = utensils
-        # item['calories'] = calories
-        # item['protein'] = protein
-        # item['fat'] = fat
-        # item['carb'] = carb
-        # item['protein_u'] = protein_u
-        # item['fat_u'] = fat_u
-        # item['carb_u'] = carb_u
+        item['calories'] = calories
+        item['protein'] = protein
+        item['fat'] = fat
+        item['carb'] = carb
+        item['protein_u'] = protein_u
+        item['fat_u'] = fat_u
+        item['carb_u'] = carb_u
         item['total_steps'] = total_steps
         #item['num_comments'] = num_comments
 
