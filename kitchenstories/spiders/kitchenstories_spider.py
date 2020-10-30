@@ -14,7 +14,7 @@ class kitchenstoriesSpider(Spider):
                         extract()[0].split('=')[-1])
 
         url_list = [f'https://www.kitchenstories.com/en/categories/dinner?page={i+1}'\
-                    for i in range(3)] #range(num_pages)]
+                    for i in range(2)] #range(num_pages)]
 
         for url in url_list:
 
@@ -115,6 +115,7 @@ class kitchenstoriesSpider(Spider):
 
         try:
             dish_description = response.xpath('//p[@class="author-information__text"]/text()').extract_first()
+            dish_description = dish_description.replace('“','').replace('”','')
         except:
             print('***** No description provided *****')
             print(f'Offending URL: {response.url}')

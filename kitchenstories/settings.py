@@ -33,6 +33,8 @@ DOWNLOAD_DELAY = 2
 # Disable cookies (enabled by default)
 #COOKIES_ENABLED = False
 
+FEED_EXPORT_ENCODING = 'Latin'
+
 # Disable Telnet Console (enabled by default)
 #TELNETCONSOLE_ENABLED = False
 
