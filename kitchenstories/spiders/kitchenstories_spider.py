@@ -9,12 +9,13 @@ class kitchenstoriesSpider(Spider):
     allowed_urls = ['https://www.kitchenstories.com']
 
 
+
     def parse(self, response):
         num_pages = int(response.xpath('//ul[@class="pagination"]/li')[-1].xpath('./a/@href').\
                         extract()[0].split('=')[-1])
 
         url_list = [f'https://www.kitchenstories.com/en/categories/dinner?page={i+1}'\
-                    for i in range(2)] #range(num_pages)]
+                    for i in range(num_pages)]
 
         for url in url_list:
 
@@ -25,6 +26,7 @@ class kitchenstoriesSpider(Spider):
             print('*'*30)
 
             yield Request(url = url, callback = self.parse_dinner_page)
+
 
 
     def parse_dinner_page(self, response):
@@ -43,11 +45,18 @@ class kitchenstoriesSpider(Spider):
             yield Request(url = url, callback = self.parse_dish_page)
 
 
+
     def parse_dish_page(self, response):
         
         #DISH NAME
-        #NOTE: Did not use try/except since dish name is always present - otherwise dish wouldn't exist
-        dish_name = response.xpath('//h1[@class="main-headline recipe-title main-headline"]/text()').extract()
+        
+        try:
+            dish_name = response.xpath('//h1[@class="main-headline recipe-title main-headline"]/text()').extract()
+        except:
+            print('***** No dish name given *****')
+            print(f'Offending URL: {response.url}')
+            dish_name = None
+
 
         #RATING 
 
@@ -73,7 +82,7 @@ class kitchenstoriesSpider(Spider):
                 if k == 'filled' or k == 'half-filled':
                     rating = v + rating
         except:
-            print('***** No rating given for dish - assuming 0 stars *****')
+            print('***** No rating given for dish *****')
             print(f'Offending URL: {response.url}')
             rating = None
 
@@ -83,7 +92,7 @@ class kitchenstoriesSpider(Spider):
         try:
             reviews_for_rating = int(response.xpath('//div[@class="rating__text"]/text()').extract()[0].split()[-2])
         except:
-            print('***** Rating based on 0 reviews - returning 0 *****')
+            print('***** No reviews for rating found *****')
             print(f'Offending URL: {response.url}')
             reviews_for_rating = None
 
@@ -107,6 +116,7 @@ class kitchenstoriesSpider(Spider):
             print('***** No author found *****')
             print(f'Offending URL: {response.url}')
             author = None            
+
 
         #AUTHOR TYPE
 
@@ -174,24 +184,35 @@ class kitchenstoriesSpider(Spider):
         
         #SERVINGS
 
-        servings = int(response.xpath('//span[@class="stepper-value"]/text()').extract_first())
+        try:
+            servings = int(response.xpath('//span[@class="stepper-value"]/text()').extract_first())
+        except:
+            print('***** No serving number found *****')
+            print(f'Offending URL: {response.url}')
+            servings = None            
 
         
         #INGREDIENT LIST
 
         try:
             ingredient_list = response.xpath('//td[@class="ingredients__col-2"]/text()').extract()
+            
+            #new
+            #ingredient_list = ingredient_list.split(',')
 
             ingredient_quantity = response.xpath('//td[@class="ingredients__col-1 js-col-1"]/@data-amount').extract()
             [float(i) for i in ingredient_quantity]
 
             ingredient_unit = response.xpath('//td[@class="ingredients__col-1 js-col-1"]/@data-unit').extract()
 
-            condiment_quantity = [0] * (len(ingredient_list) - len(ingredient_quantity))
-            condiment_unit = [''] * (len(ingredient_list) - len(ingredient_unit))
+            if len(ingredient_quantity) != len(ingredient_list):
+                condiment_quantity = ['0'] * (len(ingredient_list) - len(ingredient_quantity))
+                ingredient_quantity.extend(condiment_quantity)
+                ingredient_quantity = [float(i) for i in ingredient_quantity]
 
-            ingredient_quantity.extend(condiment_quantity)
+            condiment_unit = [''] * (len(ingredient_list) - len(ingredient_unit))
             ingredient_unit.extend(condiment_unit)
+            
         except:
             print('***** No ingredients found *****')
             print(f'Offending URL: {response.url}')
@@ -204,6 +225,7 @@ class kitchenstoriesSpider(Spider):
 
         try:
             utensils = response.xpath('//ul[@class="comma-separated-list"]/li/text()').extract()
+            
         except:
             print('***** No utensils found *****')
             print(f'Offending URL: {response.url}')
@@ -266,9 +288,22 @@ class kitchenstoriesSpider(Spider):
         except:
             print('***** No steps found *****')
             print(f'Offeding URL: {response.url}')
-            total_steps = None            
+            total_steps = None
 
 
+        #IMAGES LISTED
+
+        try:
+            gallery = response.xpath('//div[@class="detail-page-content js-comment-wrapper"]').extract()
+            image_count = int(gallery[0].split('"')[-2])
+        except:
+            print('***** No images found *****')
+            print(f'Offending URL: {response.url}')
+            image_count = None            
+
+
+        #Pulling all data into defined Scrapy items
+        
         #Item listing
 
         item = KitchenstoriesItem()
@@ -295,5 +330,6 @@ class kitchenstoriesSpider(Spider):
         item['fat_u'] = fat_u
         item['carb_u'] = carb_u
         item['total_steps'] = total_steps
+        item['image_count'] = image_count
 
         yield item

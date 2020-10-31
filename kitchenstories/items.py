@@ -30,3 +30,4 @@ class KitchenstoriesItem(scrapy.Item):
     fat_u = scrapy.Field()
     carb_u = scrapy.Field()
     total_steps = scrapy.Field()
+    image_count = scrapy.Field()
