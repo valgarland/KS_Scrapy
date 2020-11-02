@@ -310,6 +310,7 @@ class kitchenstoriesSpider(Spider):
         item['dish_name'] = dish_name
         item['rating'] = rating
         item['reviews_for_rating'] = reviews_for_rating
+        item['user_likes'] = user_likes
         item['author'] = author
         item['author_type'] = author_type
         item['dish_description'] = dish_description

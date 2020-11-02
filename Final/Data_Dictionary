@@ -13,7 +13,16 @@ https://www.kitchenstories.com/en/categories/dinner?page=1
 
      PROJECT DESCRIPTION
 -----------------------------
+Looking at recipes from a users perspective, this project dives into insights related
+to user experience. 
 
+Research Questions:
+
+What recipes should you be looking at for detailed nutritional information?
+What are the most common ingredients?
+What is the difficulty level of cooking on average?
+Do number of steps required to cook the dish influence the number of likes a dish has?
+Does total cooking time influence the number of likes a dish has?
 
 #############################
 
@@ -24,6 +33,7 @@ To provide a detailed description of the information used to perform data analys
 #############################
    
        FILES DESCRIBED
+     DATA CLEANING FOLDER
 -----------------------------
 kitchenstories_30102020.csv
 -----------------------------
@@ -32,6 +42,7 @@ Attribute Desriptions:
               dish_name : ('str')   Dish name provided by recipe author
                  rating : ('float') Average rating given by KS community members (out of 5) - None if no reviews 
      reviews_for_rating : ('float') Number of reviews given by KS community users used to calculate 'Rating' - None if no reviews
+             user_likes : ('int')   Number of likes provided by users for a dish - None if not provided
                  author : ('str')   Author of dish recipe
             author_type : ('str')   Type of author - either community member, company partner or KS team member / chef
        dish_description : ('str')   Dish description provided by author - None if not provided
@@ -40,7 +51,7 @@ Attribute Desriptions:
               bake_time : ('int')   Bake time required for dish
               rest_time : ('int')   Rest time required for dish
                servings : ('int')   Number of servings rendered following dish preparation
-        ingredient_list : ('str')   Single string with ingredients requried for dish - ingredients seperated by comma (',')
+        ingredient_list : ('str')   Single string with ingredients required for dish - ingredients seperated by comma (',')
     ingredient_quantity : ('list')  Quantities required for each ingredient; for ingredients with no quantities assigned - 0 assumed
         ingredient_unit : ('str')   Single string with ingredient units used for dish; for ingredients with no quantities assigned - a blank input assigned (''); units seperated by comma (',')
                utensils : ('str')   Single string with utensils used for dish - None if no utensils provided; utensils seperated by comma (',')
@@ -53,3 +64,25 @@ Attribute Desriptions:
                  carb_u : ('str')   Units used to measure 'carb' attribute - None if no 'carb' assigned
             totel_steps : ('float') Total number of steps required to prepare the dish
             image_count : ('float') Number of images provided by KS community members of their prepared dishes - None if no images were provided
+            
+-----------------------------
+KS_Cleaned.csv
+-----------------------------
+In addition to the columns described in kitchenstories_30102020, these were added:
+
+           author_group : ('str')   Type of author based on author_type attribute
+             total_time : ('int')   Total time required to cook dish - sum of prep_time, bake_time, and rest_time
+           
+-----------------------------
+KS_Ingredients_Cleaned.csv
+-----------------------------
+In addition to the columns described in kitchenstories_30102020, these were added:
+  
+           author_group : ('str')   Type of author based on author_type attribute
+             total_time : ('int')   Total time required to cook dish - sum of prep_time, bake_time, and rest_time
+             ingredient : ('str')   Split ingredients from the ingredient_list attribute
+                  index : ('int')   Index of the dish throughout all recipes
+                  
+Columns removed from this file:
+
+        ingredient_list : ('str')   Single string with ingredients required for dish - ingredients seperated by comma (',')

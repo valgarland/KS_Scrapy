@@ -10,6 +10,7 @@ class KitchenstoriesItem(scrapy.Item):
     dish_name = scrapy.Field()
     rating = scrapy.Field()
     reviews_for_rating = scrapy.Field()
+    user_likes = scrapy.Field()
     author = scrapy.Field()
     author_type = scrapy.Field()
     dish_description = scrapy.Field()
